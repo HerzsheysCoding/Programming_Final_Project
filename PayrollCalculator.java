@@ -230,21 +230,93 @@ return -1;
     public static double computeNetPay(double grossPay, double deductions) {
         return 0.0;
     }
-
+   
     // THIS SECTION IS FOR VIEWING & ADDING EMPLOYEES (De Guzman)
 
-    // TODO: Print all records with computed Gross, Deductions, and Net Pay in an aligned table.
+    // Display all employee records with Gross, Deductions, and Net Pay.
     public static void viewAllEmployees(
             String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] viewAllEmployees() not yet implemented.");
+
+        if (count == 0) {
+            System.out.println("\nNo employee records found.");
+            return;
+        }
+
+        System.out.println("\n================ EMPLOYEE PAYROLL RECORDS ================");
+
+        System.out.printf("%-12s %-30s %-25s %-12s %-12s %-12s %-12s %-12s%n",
+                "EmployeeID", "Name", "Position", "HourlyRate",
+                "HoursWorked", "Gross", "Deductions", "NetPay");
+
+        for (int i = 0; i < count; i++) {
+
+            double gross = computeGrossPay(rates[i], hours[i]);
+            double deductions = computeDeductions(gross);
+            double net = computeNetPay(gross, deductions);
+
+            System.out.printf("%-12s %-30s %-25s %-12.2f %-12.2f %-12.2f %-12.2f %-12.2f%n",
+                    ids[i], names[i], positions[i], rates[i],
+                    hours[i], gross, deductions, net);
+        }
+
+        System.out.println("===========================================================");
     }
 
-    // TODO: Check capacity, validate unique ID + inputs, store in arrays, increment count, auto-save CSV.
+
+    // Add a new employee record.
     public static int addEmployee(
             Scanner scanner, String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] addEmployee() not yet implemented.");
+
+        if (count >= MAX_EMPLOYEES) {
+            System.out.println("\nEmployee capacity is full!");
+            return count;
+        }
+
+        System.out.println("\n========== ADD NEW EMPLOYEE ==========");
+
+        String id;
+
+        while (true) {
+            id = getValidString(scanner, "Enter Employee ID: ");
+
+            if (findEmployeeById(ids, count, id) != -1) {
+                System.out.println("Employee ID already exists. Try again.");
+            } else {
+                break;
+            }
+        }
+
+        String name = getValidString(scanner, "Enter Employee Name: ");
+
+        String position = getValidString(scanner, "Enter Employee Position: ");
+
+        double rate = getValidDouble(
+                scanner, "Enter Hourly Rate: ", 0.01, Double.MAX_VALUE);
+
+        double workedHours = getValidDouble(
+                scanner, "Enter Hours Worked: ", 0.0, Double.MAX_VALUE);
+
+        ids[count] = id;
+        names[count] = name;
+        positions[count] = position;
+        rates[count] = rate;
+        hours[count] = workedHours;
+
+        count++;
+
+        System.out.println("\nEmployee record added successfully!");
+
+        boolean saved = saveEmployeesToCSV(
+                FILE_NAME, ids, names, positions, rates, hours, count);
+
+        if (saved) {
+            System.out.println("Employee records saved successfully!");
+        } else {
+            System.out.println("Warning: Unable to save employee records.");
+        }
+
         return count;
     }
 
