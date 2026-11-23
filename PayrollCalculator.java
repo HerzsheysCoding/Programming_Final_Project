@@ -162,19 +162,56 @@ public static boolean saveEmployeesToCSV(String fileName, String[] ids, String[]
 
     // THIS SECTION IS FOR VALIDATION & SEARCH HELPERS (Cadahing)
 
-    // TODO: Loop until user enters a valid double between min and max.
-    public static double getValidDouble(Scanner scanner, String prompt, double min, double max) {
-        return 0.0;
+    // TODO: Loop until user enters a valid double between min and max. {
+        public static double getValidDouble(Scanner scanner, String prompt, double min, double max) {
+    while (true) {
+        System.out.print(prompt);
+        String input = scanner.nextLine().trim();
+
+        try {
+            double value = Double.parseDouble(input);
+
+            if (value >= min && value <= max) {
+                return value;
+            } else {
+                System.out.println("Invalid input. Enter a value between " + min + " and " + max + ".");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a valid number.");
+        }
     }
+}
+
+    
 
     // TODO: Loop until user enters a non-empty string with no commas (',').
     public static String getValidString(Scanner scanner, String prompt) {
-        return "";
+         while (true) {
+        System.out.print(prompt);
+        String input = scanner.nextLine().trim();
+
+        if (input.isEmpty()) {
+            System.out.println("Invalid input. Input cannot be empty.");
+        } else if (input.contains(",")) {
+            System.out.println("Invalid input. Commas are not allowed.");
+        } else {
+            return input;
+        }
+    }
+}
+
     }
 
     // TODO: Linear search ids[0..count-1] ignoring case; return index or -1 if not found.
     public static int findEmployeeById(String[] ids, int count, String targetId) {
-        return -1;
+        for (int i = 0; i < count; i++) {
+    if (ids[i].equalsIgnoreCase(targetId)) {
+        return i;
+    }
+}
+
+return -1;
     }
 
     // THIS SECTION IS FOR PAYROLL CALCULATIONS (Saniel)
