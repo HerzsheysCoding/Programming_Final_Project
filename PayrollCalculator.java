@@ -338,17 +338,89 @@ return -1;
 
     // THIS SECTION IS FOR DELETE & SUMMARY REPORT (Medellin)
 
-    // TODO: Find by ID, confirm (Y/N), shift all 5 arrays left, clear last slot, decrement count, auto-save CSV.
     public static int deleteEmployee(
             Scanner scanner, String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] deleteEmployee() not yet implemented.");
+
+        if (count == 0) {
+            System.out.println("No employee records to delete.");
+            return count;
+        }
+
+        String targetId = getValidString(scanner, "Enter Employee ID to delete: ");
+        int index = findEmployeeById(ids, count, targetId);
+
+        if (index == -1) {
+            System.out.println("Employee ID not found.");
+            return count;
+        }
+
+        System.out.print("Delete " + names[index] + "? (Y/N): ");
+        String confirm = scanner.nextLine().trim();
+
+        if (!confirm.equalsIgnoreCase("Y")) {
+            System.out.println("Deletion cancelled.");
+            return count;
+        }
+
+        // Shift remaining records one spot to the left
+        for (int i = index; i < count - 1; i++) {
+            ids[i] = ids[i + 1];
+            names[i] = names[i + 1];
+            positions[i] = positions[i + 1];
+            rates[i] = rates[i + 1];
+            hours[i] = hours[i + 1];
+        }
+
+        count--;
+        saveEmployeesToCSV(FILE_NAME, ids, names, positions, rates, hours, count);
+        System.out.println("Employee deleted successfully!");
         return count;
     }
 
-    // TODO: Compute & display total employees, overtime count, total gross/deductions/net, average net, highest earner.
     public static void generatePayrollSummary(
             String[] ids, String[] names, double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] generatePayrollSummary() not yet implemented.");
+
+        if (count == 0) {
+            System.out.println("No employee records to summarize.");
+            return;
+        }
+
+        double totalGross = 0;
+        double totalDeductions = 0;
+        double totalNet = 0;
+        int overtimeCount = 0;
+        int highestIndex = 0;
+        double highestNet = 0;
+
+        for (int i = 0; i < count; i++) {
+            double gross = computeGrossPay(rates[i], hours[i]);
+            double deductions = computeDeductions(gross);
+            double net = computeNetPay(gross, deductions);
+
+            totalGross += gross;
+            totalDeductions += deductions;
+            totalNet += net;
+
+            if (hours[i] > REGULAR_HOURS_LIMIT) {
+                overtimeCount++;
+            }
+
+            if (i == 0 || net > highestNet) {
+                highestNet = net;
+                highestIndex = i;
+            }
+        }
+
+        double averageNet = totalNet / count;
+
+        System.out.println("\n--- PAYROLL SUMMARY REPORT ---");
+        System.out.println("Total Employees: " + count);
+        System.out.println("Employees with Overtime: " + overtimeCount);
+        System.out.printf("Total Gross Pay: PHP %.2f%n", totalGross);
+        System.out.printf("Total Deductions: PHP %.2f%n", totalDeductions);
+        System.out.printf("Total Net Pay: PHP %.2f%n", totalNet);
+        System.out.printf("Average Net Pay: PHP %.2f%n", averageNet);
+        System.out.printf("Highest Earner: %s (%s) - PHP %.2f%n",
+                names[highestIndex], ids[highestIndex], highestNet);
     }
-}
