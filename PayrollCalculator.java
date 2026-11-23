@@ -99,12 +99,58 @@ public class PayrollCalculator {
     // THIS SECTION IS FOR FILE HANDLING (CSV READ/WRITE) AND IS NOT YET IMPLEMENTED (San Jose)
 
     // TODO: Read CSV rows using BufferedReader, validate fields/numbers/duplicates, load arrays, return count.
-    public static int loadEmployeesFromCSV(
-            String fileName, String[] ids, String[] names,
-            String[] positions, double[] rates, double[] hours) {
-        System.out.println("[TODO] loadEmployeesFromCSV() not yet implemented.");
-        return 0;
+    public static int loadEmployeesFromCSV(String fileName, String[] ids, String[] names,
+        String[] positions, double[] rates, double[] hours) {
+
+    int count = 0;
+
+    try {
+        File file = new File(fileName);
+
+        if (file.exists()) {
+            Scanner reader = new Scanner(file);
+            reader.nextLine();
+
+            while (reader.hasNextLine() && count < MAX_EMPLOYEES) {
+                String[] data = reader.nextLine().split(",");
+
+                if (data.length == 5) {
+                    ids[count] = data[0];
+                    names[count] = data[1];
+                    positions[count] = data[2];
+                    rates[count] = Double.parseDouble(data[3]);
+                    hours[count] = Double.parseDouble(data[4]);
+                    count++;
+                }
+            }
+            reader.close();
+        }
+    } catch (Exception e) {
+        System.out.println("Error loading records.");
     }
+
+    return count;
+}
+
+public static boolean saveEmployeesToCSV(String fileName, String[] ids, String[] names,
+        String[] positions, double[] rates, double[] hours, int count) {
+
+    try {
+        FileWriter writer = new FileWriter(fileName);
+        writer.write("ID,Name,Position,Rate,Hours\n");
+
+        for (int i = 0; i < count; i++) {
+            writer.write(ids[i] + "," + names[i] + "," + positions[i] + ","
+                    + rates[i] + "," + hours[i] + "\n");
+        }
+
+        writer.close();
+        return true;
+
+    } catch (Exception e) {
+        return false;
+    }
+}
 
     // TODO: Write CSV header and all active records using PrintWriter & FileWriter; return true on success.
     public static boolean saveEmployeesToCSV(
