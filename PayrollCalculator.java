@@ -363,7 +363,6 @@ return -1;
             return count;
         }
 
-        // Shift remaining records one spot to the left
         for (int i = index; i < count - 1; i++) {
             ids[i] = ids[i + 1];
             names[i] = names[i + 1];
