@@ -216,19 +216,31 @@ return -1;
 
     // THIS SECTION IS FOR PAYROLL CALCULATIONS (Saniel)
 
-    // TODO: Compute gross pay (regular up to 40 hrs; excess hours at 1.25x rate).
     public static double computeGrossPay(double rate, double hours) {
-        return 0.0;
+        if (!Double.isFinite(rate) || !Double.isFinite(hours) || rate <= 0 || hours <= 0) {
+            return 0.0;
+        }
+
+        double regularHours = Math.min(hours, REGULAR_HOURS_LIMIT);
+        double overtimeHours = Math.max(0.0, hours - REGULAR_HOURS_LIMIT);
+        double regularPay = rate * regularHours;
+        double overtimePay = overtimeHours * rate * OVERTIME_MULTIPLIER;
+
+        return regularPay + overtimePay;
     }
 
-    // TODO: Compute total deductions = grossPay * (TAX_RATE + CONTRIBUTION_RATE).
     public static double computeDeductions(double grossPay) {
-        return 0.0;
+        if (!Double.isFinite(grossPay) || grossPay <= 0) {
+            return 0.0;
+        }
+        return grossPay * (TAX_RATE + CONTRIBUTION_RATE);
     }
 
-    // TODO: Compute net pay = grossPay - deductions.
     public static double computeNetPay(double grossPay, double deductions) {
-        return 0.0;
+        if (!Double.isFinite(grossPay) || !Double.isFinite(deductions)) {
+            return 0.0;
+        }
+        return grossPay - deductions;
     }
    
     // THIS SECTION IS FOR VIEWING & ADDING EMPLOYEES (De Guzman)
