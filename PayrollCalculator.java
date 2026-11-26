@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileWriter;
 import java.util.Scanner;
 
 public class PayrollCalculator {
@@ -18,7 +20,9 @@ public class PayrollCalculator {
         double[] hourlyRates = new double[MAX_EMPLOYEES];
         double[] hoursWorked = new double[MAX_EMPLOYEES];
 
+        System.out.println("==========================================================");
         System.out.println("            EMPLOYEE PAYROLL CALCULATOR SYSTEM            ");
+        System.out.println("==========================================================");
 
         int recordCount = loadEmployeesFromCSV(
                 FILE_NAME, empIds, empNames, empPositions, hourlyRates, hoursWorked
@@ -96,125 +100,130 @@ public class PayrollCalculator {
         }
     }
 
-    // THIS SECTION IS FOR FILE HANDLING (CSV READ/WRITE) AND IS NOT YET IMPLEMENTED (San Jose)
+    // ==================== FILE HANDLING (San Jose) ====================
 
-    // TODO: Read CSV rows using BufferedReader, validate fields/numbers/duplicates, load arrays, return count.
     public static int loadEmployeesFromCSV(String fileName, String[] ids, String[] names,
-        String[] positions, double[] rates, double[] hours) {
+            String[] positions, double[] rates, double[] hours) {
 
-    int count = 0;
-
-    try {
+        int count = 0;
         File file = new File(fileName);
 
-        if (file.exists()) {
+        if (!file.exists()) {
+            System.out.println("[Notice] '" + fileName + "' not found. Starting with an empty list.");
+            return 0;
+        }
+
+        try {
             Scanner reader = new Scanner(file);
-            reader.nextLine();
+            if (reader.hasNextLine()) {
+                reader.nextLine(); // Skip CSV header row
+            }
 
             while (reader.hasNextLine() && count < MAX_EMPLOYEES) {
-                String[] data = reader.nextLine().split(",");
+                String line = reader.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
 
+                String[] data = line.split(",");
                 if (data.length == 5) {
-                    ids[count] = data[0];
-                    names[count] = data[1];
-                    positions[count] = data[2];
-                    rates[count] = Double.parseDouble(data[3]);
-                    hours[count] = Double.parseDouble(data[4]);
-                    count++;
+                    try {
+                        String id = data[0].trim();
+                        String name = data[1].trim();
+                        String position = data[2].trim();
+                        double rate = Double.parseDouble(data[3].trim());
+                        double hrs = Double.parseDouble(data[4].trim());
+
+                        if (!id.isEmpty() && !name.isEmpty() && !position.isEmpty()
+                                && rate > 0 && hrs >= 0 && findEmployeeById(ids, count, id) == -1) {
+                            ids[count] = id;
+                            names[count] = name;
+                            positions[count] = position;
+                            rates[count] = rate;
+                            hours[count] = hrs;
+                            count++;
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("[Warning] Skipped invalid row in CSV.");
+                    }
                 }
             }
             reader.close();
-        }
-    } catch (Exception e) {
-        System.out.println("Error loading records.");
-    }
-
-    return count;
-}
-
-public static boolean saveEmployeesToCSV(String fileName, String[] ids, String[] names,
-        String[] positions, double[] rates, double[] hours, int count) {
-
-    try {
-        FileWriter writer = new FileWriter(fileName);
-        writer.write("ID,Name,Position,Rate,Hours\n");
-
-        for (int i = 0; i < count; i++) {
-            writer.write(ids[i] + "," + names[i] + "," + positions[i] + ","
-                    + rates[i] + "," + hours[i] + "\n");
+            System.out.println("[Success] Loaded " + count + " record(s) from " + fileName + ".");
+        } catch (Exception e) {
+            System.out.println("Error loading records.");
         }
 
-        writer.close();
-        return true;
-
-    } catch (Exception e) {
-        return false;
+        return count;
     }
-}
 
-    // TODO: Write CSV header and all active records using PrintWriter & FileWriter; return true on success.
-    public static boolean saveEmployeesToCSV(
-            String fileName, String[] ids, String[] names,
+    public static boolean saveEmployeesToCSV(String fileName, String[] ids, String[] names,
             String[] positions, double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] saveEmployeesToCSV() not yet implemented.");
-        return false;
-    }
-
-    // THIS SECTION IS FOR VALIDATION & SEARCH HELPERS (Cadahing)
-
-    // TODO: Loop until user enters a valid double between min and max. {
-        public static double getValidDouble(Scanner scanner, String prompt, double min, double max) {
-    while (true) {
-        System.out.print(prompt);
-        String input = scanner.nextLine().trim();
 
         try {
-            double value = Double.parseDouble(input);
+            FileWriter writer = new FileWriter(fileName);
+            writer.write("ID,Name,Position,Rate,Hours\n");
 
-            if (value >= min && value <= max) {
-                return value;
-            } else {
-                System.out.println("Invalid input. Enter a value between " + min + " and " + max + ".");
+            for (int i = 0; i < count; i++) {
+                writer.write(ids[i] + "," + names[i] + "," + positions[i] + ","
+                        + rates[i] + "," + hours[i] + "\n");
             }
 
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a valid number.");
+            writer.close();
+            return true;
+
+        } catch (Exception e) {
+            return false;
         }
     }
-}
 
-    
+    // ==================== VALIDATION & SEARCH HELPERS (Cadahing) ====================
 
-    // TODO: Loop until user enters a non-empty string with no commas (',').
+    public static double getValidDouble(Scanner scanner, String prompt, double min, double max) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+
+            try {
+                double value = Double.parseDouble(input);
+
+                if (value >= min && value <= max) {
+                    return value;
+                } else {
+                    System.out.println("Invalid input. Enter a value between " + min + " and " + max + ".");
+                }
+
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        }
+    }
+
     public static String getValidString(Scanner scanner, String prompt) {
-         while (true) {
-        System.out.print(prompt);
-        String input = scanner.nextLine().trim();
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
 
-        if (input.isEmpty()) {
-            System.out.println("Invalid input. Input cannot be empty.");
-        } else if (input.contains(",")) {
-            System.out.println("Invalid input. Commas are not allowed.");
-        } else {
-            return input;
+            if (input.isEmpty()) {
+                System.out.println("Invalid input. Input cannot be empty.");
+            } else if (input.contains(",")) {
+                System.out.println("Invalid input. Commas are not allowed.");
+            } else {
+                return input;
+            }
         }
     }
-}
 
-    }
-
-    // TODO: Linear search ids[0..count-1] ignoring case; return index or -1 if not found.
     public static int findEmployeeById(String[] ids, int count, String targetId) {
         for (int i = 0; i < count; i++) {
-    if (ids[i].equalsIgnoreCase(targetId)) {
-        return i;
+            if (ids[i].equalsIgnoreCase(targetId)) {
+                return i;
+            }
+        }
+        return -1;
     }
-}
 
-return -1;
-    }
-
-    // THIS SECTION IS FOR PAYROLL CALCULATIONS (Saniel)
+    // ==================== PAYROLL CALCULATIONS (Saniel) ====================
 
     public static double computeGrossPay(double rate, double hours) {
         if (!Double.isFinite(rate) || !Double.isFinite(hours) || rate <= 0 || hours <= 0) {
@@ -242,10 +251,9 @@ return -1;
         }
         return grossPay - deductions;
     }
-   
-    // THIS SECTION IS FOR VIEWING & ADDING EMPLOYEES (De Guzman)
 
-    // Display all employee records with Gross, Deductions, and Net Pay.
+    // ==================== VIEWING & ADDING EMPLOYEES (De Guzman) ====================
+
     public static void viewAllEmployees(
             String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
@@ -262,7 +270,6 @@ return -1;
                 "HoursWorked", "Gross", "Deductions", "NetPay");
 
         for (int i = 0; i < count; i++) {
-
             double gross = computeGrossPay(rates[i], hours[i]);
             double deductions = computeDeductions(gross);
             double net = computeNetPay(gross, deductions);
@@ -275,8 +282,6 @@ return -1;
         System.out.println("===========================================================");
     }
 
-
-    // Add a new employee record.
     public static int addEmployee(
             Scanner scanner, String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
@@ -289,7 +294,6 @@ return -1;
         System.out.println("\n========== ADD NEW EMPLOYEE ==========");
 
         String id;
-
         while (true) {
             id = getValidString(scanner, "Enter Employee ID: ");
 
@@ -301,14 +305,9 @@ return -1;
         }
 
         String name = getValidString(scanner, "Enter Employee Name: ");
-
         String position = getValidString(scanner, "Enter Employee Position: ");
-
-        double rate = getValidDouble(
-                scanner, "Enter Hourly Rate: ", 0.01, Double.MAX_VALUE);
-
-        double workedHours = getValidDouble(
-                scanner, "Enter Hours Worked: ", 0.0, Double.MAX_VALUE);
+        double rate = getValidDouble(scanner, "Enter Hourly Rate: ", 0.01, Double.MAX_VALUE);
+        double workedHours = getValidDouble(scanner, "Enter Hours Worked: ", 0.0, Double.MAX_VALUE);
 
         ids[count] = id;
         names[count] = name;
@@ -332,23 +331,98 @@ return -1;
         return count;
     }
 
-    // THIS SECTION IS FOR SEARCHING, UPDATING, DELETING, AND SUMMARY REPORT (San Jose)
+    // ==================== SEARCHING & UPDATING (San Jose) ====================
 
-    // TODO: Find employee by ID and print an itemized payslip (regular, overtime, tax, contrib, net).
     public static void searchEmployee(
             Scanner scanner, String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] searchEmployee() not yet implemented.");
+
+        if (count == 0) {
+            System.out.println("\nNo employee records found.");
+            return;
+        }
+
+        String targetId = getValidString(scanner, "Enter Employee ID to search: ");
+        int index = findEmployeeById(ids, count, targetId);
+
+        if (index == -1) {
+            System.out.println("Employee ID not found.");
+            return;
+        }
+
+        double regularHours = Math.min(hours[index], REGULAR_HOURS_LIMIT);
+        double overtimeHours = Math.max(0.0, hours[index] - REGULAR_HOURS_LIMIT);
+        double regularPay = regularHours * rates[index];
+        double overtimePay = overtimeHours * rates[index] * OVERTIME_MULTIPLIER;
+        double gross = computeGrossPay(rates[index], hours[index]);
+        double tax = gross * TAX_RATE;
+        double contrib = gross * CONTRIBUTION_RATE;
+        double deductions = computeDeductions(gross);
+        double net = computeNetPay(gross, deductions);
+
+        System.out.println("\n--- EMPLOYEE PAYSLIP ---");
+        System.out.println("ID: " + ids[index]);
+        System.out.println("Name: " + names[index]);
+        System.out.println("Position: " + positions[index]);
+        System.out.printf("Hourly Rate: PHP %.2f%n", rates[index]);
+        System.out.printf("Regular Pay (%.1f hrs): PHP %.2f%n", regularHours, regularPay);
+        System.out.printf("Overtime Pay (%.1f hrs): PHP %.2f%n", overtimeHours, overtimePay);
+        System.out.printf("Gross Pay: PHP %.2f%n", gross);
+        System.out.printf("Tax (10%%): PHP %.2f%n", tax);
+        System.out.printf("Contributions (5%%): PHP %.2f%n", contrib);
+        System.out.printf("Total Deductions: PHP %.2f%n", deductions);
+        System.out.printf("Net Pay: PHP %.2f%n", net);
     }
 
-    // TODO: Find employee by ID, show field edit menu (Name/Position/Rate/Hours), update array, auto-save CSV.
     public static void updateEmployee(
             Scanner scanner, String[] ids, String[] names, String[] positions,
             double[] rates, double[] hours, int count) {
-        System.out.println("[TODO] updateEmployee() not yet implemented.");
+
+        if (count == 0) {
+            System.out.println("\nNo employee records found.");
+            return;
+        }
+
+        String targetId = getValidString(scanner, "Enter Employee ID to update: ");
+        int index = findEmployeeById(ids, count, targetId);
+
+        if (index == -1) {
+            System.out.println("Employee ID not found.");
+            return;
+        }
+
+        System.out.println("Updating: " + names[index]);
+        System.out.println("1. Name");
+        System.out.println("2. Position");
+        System.out.println("3. Hourly Rate");
+        System.out.println("4. Hours Worked");
+        System.out.println("5. Cancel");
+
+        int option = getValidInt(scanner, "Choose field to update (1-5): ", 1, 5);
+
+        switch (option) {
+            case 1:
+                names[index] = getValidString(scanner, "Enter new Name: ");
+                break;
+            case 2:
+                positions[index] = getValidString(scanner, "Enter new Position: ");
+                break;
+            case 3:
+                rates[index] = getValidDouble(scanner, "Enter new Hourly Rate: ", 0.01, Double.MAX_VALUE);
+                break;
+            case 4:
+                hours[index] = getValidDouble(scanner, "Enter new Hours Worked: ", 0.0, Double.MAX_VALUE);
+                break;
+            case 5:
+                System.out.println("Update cancelled.");
+                return;
+        }
+
+        saveEmployeesToCSV(FILE_NAME, ids, names, positions, rates, hours, count);
+        System.out.println("Employee record updated!");
     }
 
-    // THIS SECTION IS FOR DELETE & SUMMARY REPORT (Medellin)
+    // ==================== DELETE & SUMMARY REPORT (Medellin) ====================
 
     public static int deleteEmployee(
             Scanner scanner, String[] ids, String[] names, String[] positions,
@@ -435,3 +509,4 @@ return -1;
         System.out.printf("Highest Earner: %s (%s) - PHP %.2f%n",
                 names[highestIndex], ids[highestIndex], highestNet);
     }
+}
